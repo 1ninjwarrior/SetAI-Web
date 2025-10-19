@@ -68,24 +68,17 @@
         const supabaseKey = 'YOUR_ANON_KEY'; // This will be replaced by GitHub Actions
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
-        // Check for access token in URL fragment
-        const hash = window.location.hash;
-        const urlParams = new URLSearchParams(hash.substring(1));
-        
-        const accessToken = urlParams.get('access_token');
-        const refreshToken = urlParams.get('refresh_token');
-        const type = urlParams.get('type');
-        
-        console.log('Hash:', hash);
-        console.log('Access token:', accessToken);
-        console.log('Type:', type);
-        
-        if (accessToken && type === 'recovery') {
-            document.getElementById('status').innerHTML = '<div class="success">✅ Password reset link is valid!</div>';
-            document.getElementById('passwordForm').style.display = 'block';
-        } else {
-            document.getElementById('status').innerHTML = '<div class="error">❌ Invalid reset link</div>';
-        }
+        // Listen for auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth event:', event);
+            console.log('Session:', session);
+            
+            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                // User is now logged in, show password form
+                document.getElementById('status').innerHTML = '<div class="success">✅ Ready to reset your password</div>';
+                document.getElementById('passwordForm').style.display = 'block';
+            }
+        });
         
         async function resetPassword() {
             const newPassword = document.getElementById('newPassword').value;
@@ -102,23 +95,7 @@
             }
             
             try {
-                // First, set the session with the tokens
-                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                    access_token: accessToken,
-                    refresh_token: refreshToken
-                });
-                
-                if (sessionError) {
-                    console.error('Session error:', sessionError);
-                    throw new Error('Failed to authenticate: ' + sessionError.message);
-                }
-                
-                console.log('Session set successfully:', sessionData);
-                
-                // Wait a moment for the session to be established
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Now try to update the password
+                // Use updateUser directly - no tokens needed!
                 const { data, error } = await supabase.auth.updateUser({
                     password: newPassword
                 });
