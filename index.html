@@ -61,16 +61,24 @@
     </div>
 
     <script>
-        // Get the token from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
+        // Check for Supabase access token in URL fragment
+        const hash = window.location.hash;
+        const urlParams = new URLSearchParams(hash.substring(1)); // Remove the # and parse
+        
+        const accessToken = urlParams.get('access_token');
+        const tokenType = urlParams.get('token_type');
         const type = urlParams.get('type');
         
-        if (type === 'recovery' && token) {
+        console.log('Hash:', hash);
+        console.log('Access token:', accessToken);
+        console.log('Type:', type);
+        
+        if (accessToken && type === 'recovery') {
             document.getElementById('status').innerHTML = '<div class="success">✅ Password reset link is valid!</div>';
             document.getElementById('passwordForm').style.display = 'block';
         } else {
             document.getElementById('status').innerHTML = '<div class="error">❌ Invalid reset link</div>';
+            console.log('Invalid link - missing access_token or type !== recovery');
         }
         
         async function resetPassword() {
