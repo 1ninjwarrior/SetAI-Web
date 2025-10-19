@@ -43,6 +43,15 @@
             font-weight: bold;
             margin-bottom: 20px;
         }
+        .debug {
+            background: #f3f4f6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +67,10 @@
             <button onclick="resetPassword()">Reset Password</button>
         </div>
         <div id="message"></div>
+        <div id="debug" class="debug" style="display:none;">
+            <strong>Debug Info:</strong><br>
+            <div id="debugContent"></div>
+        </div>
     </div>
 
     <!-- Include Supabase client -->
@@ -68,15 +81,42 @@
         const supabaseKey = 'YOUR_ANON_KEY'; // This will be replaced by GitHub Actions
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
-        // Listen for auth state changes
-        supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth event:', event);
-            console.log('Session:', session);
+        let debugInfo = [];
+        
+        function addDebugInfo(message) {
+            debugInfo.push(new Date().toLocaleTimeString() + ': ' + message);
+            document.getElementById('debugContent').innerHTML = debugInfo.join('<br>');
+            document.getElementById('debug').style.display = 'block';
+            console.log(message);
+        }
+        
+        // Check current session on page load
+        async function checkCurrentSession() {
+            addDebugInfo('Checking current session...');
+            const { data: { session }, error } = await supabase.auth.getSession();
+            addDebugInfo('Session check result: ' + JSON.stringify({ session: !!session, error: !!error }));
             
-            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
-                // User is now logged in, show password form
+            if (session) {
+                addDebugInfo('User is already authenticated: ' + session.user.email);
                 document.getElementById('status').innerHTML = '<div class="success">✅ Ready to reset your password</div>';
                 document.getElementById('passwordForm').style.display = 'block';
+            } else {
+                addDebugInfo('No active session found');
+            }
+        }
+        
+        // Listen for auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            addDebugInfo('Auth state change: ' + event + ' | Session: ' + (session ? 'Yes' : 'No'));
+            
+            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                addDebugInfo('User authenticated, showing password form');
+                document.getElementById('status').innerHTML = '<div class="success">✅ Ready to reset your password</div>';
+                document.getElementById('passwordForm').style.display = 'block';
+            } else if (event === 'SIGNED_OUT') {
+                addDebugInfo('User signed out');
+                document.getElementById('status').innerHTML = '<div class="error">❌ Please use the password reset link from your email</div>';
+                document.getElementById('passwordForm').style.display = 'none';
             }
         });
         
@@ -95,7 +135,16 @@
             }
             
             try {
-                // Use updateUser directly - no tokens needed!
+                addDebugInfo('Attempting to update password...');
+                
+                // Check if user is authenticated before updating
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError || !session) {
+                    throw new Error('User not authenticated. Please use the password reset link from your email.');
+                }
+                
+                addDebugInfo('User is authenticated, proceeding with password update');
+                
                 const { data, error } = await supabase.auth.updateUser({
                     password: newPassword
                 });
@@ -104,14 +153,19 @@
                     throw error;
                 }
                 
+                addDebugInfo('Password updated successfully');
                 document.getElementById('message').innerHTML = '<div class="success">✅ Password reset successful! You can now log in with your new password.</div>';
                 document.getElementById('passwordForm').style.display = 'none';
                 
             } catch (error) {
+                addDebugInfo('Password reset error: ' + error.message);
                 console.error('Password reset error:', error);
                 document.getElementById('message').innerHTML = '<div class="error">❌ Error resetting password: ' + error.message + '</div>';
             }
         }
+        
+        // Check session when page loads
+        checkCurrentSession();
     </script>
 </body>
 </html>
