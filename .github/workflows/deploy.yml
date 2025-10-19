@@ -12,8 +12,7 @@ jobs:
       
       - name: Replace secrets in HTML
         run: |
-          sed -i "s/YOUR_SUPABASE_URL/${{ secrets.SUPABASE_URL }}/g" index.html
-          sed -i "s/YOUR_SUPABASE_ANON_KEY/${{ secrets.SUPABASE_ANON_KEY }}/g" index.html
+          sed -i "s/YOUR_ANON_KEY/${{ secrets.SUPABASE_ANON_KEY }}/g" index.html
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

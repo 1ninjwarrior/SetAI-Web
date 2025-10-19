@@ -63,9 +63,9 @@
     <!-- Include Supabase client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Initialize Supabase client with your credentials
+        // Initialize Supabase client
         const supabaseUrl = 'https://dbxbycbkmjthqmjiorkp.supabase.co';
-        const supabaseKey = 'SUPABASE_ANON_KEY'; // Replace with your actual anon key
+        const supabaseKey = 'YOUR_ANON_KEY'; // This will be replaced by GitHub Actions
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
         // Check for access token in URL fragment
@@ -83,6 +83,12 @@
         if (accessToken && type === 'recovery') {
             document.getElementById('status').innerHTML = '<div class="success">✅ Password reset link is valid!</div>';
             document.getElementById('passwordForm').style.display = 'block';
+            
+            // Set the session with the access token
+            supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+            });
         } else {
             document.getElementById('status').innerHTML = '<div class="error">❌ Invalid reset link</div>';
         }
