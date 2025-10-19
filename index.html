@@ -20,7 +20,6 @@
         }
         .success { color: #10b981; }
         .error { color: #ef4444; }
-        .warning { color: #f59e0b; }
         button { 
             background: #000; 
             color: white; 
@@ -30,10 +29,6 @@
             cursor: pointer; 
             margin: 10px;
             font-size: 16px;
-        }
-        button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
         }
         input { 
             padding: 12px; 
@@ -48,12 +43,6 @@
             font-weight: bold;
             margin-bottom: 20px;
         }
-        .retry-section {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #f3f4f6;
-            border-radius: 8px;
-        }
     </style>
 </head>
 <body>
@@ -66,15 +55,7 @@
             <input type="password" id="newPassword" placeholder="New Password" />
             <input type="password" id="confirmPassword" placeholder="Confirm Password" />
             <br>
-            <button id="resetButton" onclick="resetPassword()">Reset Password</button>
-        </div>
-        <div id="errorSection" style="display:none;">
-            <div class="retry-section">
-                <h3>Link Expired</h3>
-                <p>This password reset link has expired or is invalid.</p>
-                <p>Please request a new password reset from your SetAI app.</p>
-                <button onclick="requestNewLink()">Request New Reset Link</button>
-            </div>
+            <button onclick="resetPassword()">Reset Password</button>
         </div>
         <div id="message"></div>
     </div>
@@ -82,42 +63,33 @@
     <!-- Include Supabase client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Initialize Supabase client
-        const supabaseUrl = 'YOUR_SUPABASE_URL'; // Replace with your actual Supabase URL
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your actual anon key
+        // Initialize Supabase client with your credentials
+        const supabaseUrl = 'https://dbxbycbkmjthqmjiorkp.supabase.co';
+        const supabaseKey = 'SUPABASE_ANON_KEY'; // Replace with your actual anon key
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
-        // Check for Supabase access token or error in URL fragment
+        // Check for access token in URL fragment
         const hash = window.location.hash;
         const urlParams = new URLSearchParams(hash.substring(1));
         
         const accessToken = urlParams.get('access_token');
-        const tokenType = urlParams.get('token_type');
+        const refreshToken = urlParams.get('refresh_token');
         const type = urlParams.get('type');
-        const error = urlParams.get('error');
-        const errorCode = urlParams.get('error_code');
-        const errorDescription = urlParams.get('error_description');
         
         console.log('Hash:', hash);
         console.log('Access token:', accessToken);
         console.log('Type:', type);
-        console.log('Error:', error);
         
-        if (error === 'access_denied' && errorCode === 'otp_expired') {
-            document.getElementById('status').innerHTML = '<div class="error">❌ Password reset link has expired</div>';
-            document.getElementById('errorSection').style.display = 'block';
-        } else if (accessToken && type === 'recovery') {
+        if (accessToken && type === 'recovery') {
             document.getElementById('status').innerHTML = '<div class="success">✅ Password reset link is valid!</div>';
             document.getElementById('passwordForm').style.display = 'block';
         } else {
             document.getElementById('status').innerHTML = '<div class="error">❌ Invalid reset link</div>';
-            document.getElementById('errorSection').style.display = 'block';
         }
         
         async function resetPassword() {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            const resetButton = document.getElementById('resetButton');
             
             if (newPassword !== confirmPassword) {
                 alert('Passwords do not match');
@@ -130,10 +102,7 @@
             }
             
             try {
-                resetButton.disabled = true;
-                resetButton.textContent = 'Resetting...';
-                
-                // Use the access token to update the password
+                // Use updateUser to change the password
                 const { data, error } = await supabase.auth.updateUser({
                     password: newPassword
                 });
@@ -148,13 +117,7 @@
             } catch (error) {
                 console.error('Password reset error:', error);
                 document.getElementById('message').innerHTML = '<div class="error">❌ Error resetting password: ' + error.message + '</div>';
-                resetButton.disabled = false;
-                resetButton.textContent = 'Reset Password';
             }
-        }
-        
-        function requestNewLink() {
-            alert('Please go back to your SetAI app and request a new password reset link.');
         }
     </script>
 </body>
