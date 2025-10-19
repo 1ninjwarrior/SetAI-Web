@@ -83,12 +83,6 @@
         if (accessToken && type === 'recovery') {
             document.getElementById('status').innerHTML = '<div class="success">✅ Password reset link is valid!</div>';
             document.getElementById('passwordForm').style.display = 'block';
-            
-            // Set the session with the access token
-            supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken
-            });
         } else {
             document.getElementById('status').innerHTML = '<div class="error">❌ Invalid reset link</div>';
         }
@@ -108,7 +102,23 @@
             }
             
             try {
-                // Use updateUser to change the password
+                // First, set the session with the tokens
+                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                });
+                
+                if (sessionError) {
+                    console.error('Session error:', sessionError);
+                    throw new Error('Failed to authenticate: ' + sessionError.message);
+                }
+                
+                console.log('Session set successfully:', sessionData);
+                
+                // Wait a moment for the session to be established
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Now try to update the password
                 const { data, error } = await supabase.auth.updateUser({
                     password: newPassword
                 });
