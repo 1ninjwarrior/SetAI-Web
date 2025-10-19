@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Password - SetAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 400px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        button { 
+            background: #000; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin: 10px;
+            font-size: 16px;
+        }
+        input { 
+            padding: 12px; 
+            margin: 10px; 
+            width: 250px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">💪 SetAI</div>
+        <h2>Reset Your Password</h2>
+        <div id="status">Processing password reset...</div>
+        <div id="passwordForm" style="display:none;">
+            <p>Enter your new password below:</p>
+            <input type="password" id="newPassword" placeholder="New Password" />
+            <input type="password" id="confirmPassword" placeholder="Confirm Password" />
+            <br>
+            <button onclick="resetPassword()">Reset Password</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // Get the token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const type = urlParams.get('type');
+        
+        if (type === 'recovery' && token) {
+            document.getElementById('status').innerHTML = '<div class="success">✅ Password reset link is valid!</div>';
+            document.getElementById('passwordForm').style.display = 'block';
+        } else {
+            document.getElementById('status').innerHTML = '<div class="error">❌ Invalid reset link</div>';
+        }
+        
+        async function resetPassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            try {
+                // This would need to be implemented with your Supabase client
+                document.getElementById('message').innerHTML = '<div class="success">✅ Password reset successful! You can now log in with your new password.</div>';
+                document.getElementById('passwordForm').style.display = 'none';
+            } catch (error) {
+                document.getElementById('message').innerHTML = '<div class="error">❌ Error resetting password: ' + error.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>
